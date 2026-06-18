@@ -27,7 +27,7 @@ import matplotlib.pyplot as plt
 import os
 from collections import defaultdict
 from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
+from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import StratifiedGroupKFold, cross_val_score
@@ -69,7 +69,7 @@ def extract_features(token_lengths: list[int]) -> np.ndarray:
     # Normalization makes it independent of response length.
     # INTERVIEW NOTE: Without normalization, long responses would dominate
     # just because they have more tokens — we'd be learning length, not pattern.
-    hist, _ = np.histogram(arr, bins=range(1, 22), density=False)
+    hist,_ = np.histogram(arr, bins=[1, 3, 6, 11, 16, 22], density=False)
     hist_normalized = hist / (hist.sum() + 1e-8)  # avoid div-by-zero
 
     features = np.concatenate([
@@ -131,23 +131,12 @@ def train_and_evaluate(X, y, groups, topic_names: list[str], experiment_name: st
     # StratifiedGroupKFold: stratified by class, grouped by prompt
     cv = StratifiedGroupKFold(n_splits=5)
     # Pre‑fit a scaler on the whole dataset (for full fit)
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
     results = {}
     for clf_name, clf in [
-        ("Logistic Regression", LogisticRegression(max_iter=5000, random_state=42)),
+        ("Logistic Regression", make_pipeline(StandardScaler(), LogisticRegression(max_iter=1000, random_state=42))),
         ("Random Forest", RandomForestClassifier(n_estimators=100, random_state=42)),
     ]:
-        if clf_name == "Logistic Regression":
-            # Wrap the classifier with a scaler
-            pipeline = Pipeline([
-                ("scaler", StandardScaler()),
-                ("clf", clf)
-            ])
-            scores = cross_val_score(pipeline, X, y_enc, cv=cv, groups=groups, scoring="accuracy")
-        else:
-            # Random Forest does not need scaling
-            scores = cross_val_score(clf, X, y_enc, cv=cv, groups=groups, scoring="accuracy")
+        scores = cross_val_score(clf, X, y_enc, cv=cv, groups=groups, scoring="accuracy")
         results[clf_name] = scores
         print(f"\n{clf_name}:")
         print(f"  CV accuracy: {scores.mean():.3f} ± {scores.std():.3f}")
@@ -155,12 +144,12 @@ def train_and_evaluate(X, y, groups, topic_names: list[str], experiment_name: st
 
     # Full fit on all data for confusion matrix and feature importance
     # Full fit for Logistic Regression (using scaled data)
-    lr = LogisticRegression(max_iter=5000, random_state=42)
-    lr.fit(X_scaled, y_enc)
-    y_pred = lr.predict(X_scaled)
+    lr_regularized = make_pipeline(StandardScaler(), LogisticRegression(C=0.1, max_iter=1000, random_state=42))
+    lr_regularized.fit(X, y_enc)
+    y_pred = lr_regularized.predict(X)
 
     # Random Forest (no scaling needed)
-    rf = RandomForestClassifier(n_estimators=100, random_state=42)
+    rf = RandomForestClassifier(n_estimators=100, max_depth=3, min_samples_leaf=3, random_state=42)
     rf.fit(X, y_enc)
 
     print(f"\nClassification report (Logistic Regression, full fit):")
