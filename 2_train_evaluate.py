@@ -26,7 +26,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 from collections import defaultdict
-
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import StratifiedGroupKFold, cross_val_score
@@ -129,23 +130,36 @@ def train_and_evaluate(X, y, groups, topic_names: list[str], experiment_name: st
 
     # StratifiedGroupKFold: stratified by class, grouped by prompt
     cv = StratifiedGroupKFold(n_splits=5)
-
+    # Pre‑fit a scaler on the whole dataset (for full fit)
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
     results = {}
     for clf_name, clf in [
-        ("Logistic Regression", LogisticRegression(max_iter=1000, random_state=42)),
-        ("Random Forest",       RandomForestClassifier(n_estimators=100, random_state=42)),
+        ("Logistic Regression", LogisticRegression(max_iter=5000, random_state=42)),
+        ("Random Forest", RandomForestClassifier(n_estimators=100, random_state=42)),
     ]:
-        scores = cross_val_score(clf, X, y_enc, cv=cv, groups=groups, scoring="accuracy")
+        if clf_name == "Logistic Regression":
+            # Wrap the classifier with a scaler
+            pipeline = Pipeline([
+                ("scaler", StandardScaler()),
+                ("clf", clf)
+            ])
+            scores = cross_val_score(pipeline, X, y_enc, cv=cv, groups=groups, scoring="accuracy")
+        else:
+            # Random Forest does not need scaling
+            scores = cross_val_score(clf, X, y_enc, cv=cv, groups=groups, scoring="accuracy")
         results[clf_name] = scores
         print(f"\n{clf_name}:")
         print(f"  CV accuracy: {scores.mean():.3f} ± {scores.std():.3f}")
         print(f"  Per-fold:    {[f'{s:.2f}' for s in scores]}")
 
     # Full fit on all data for confusion matrix and feature importance
-    lr = LogisticRegression(max_iter=1000, random_state=42)
-    lr.fit(X, y_enc)
-    y_pred = lr.predict(X)
+    # Full fit for Logistic Regression (using scaled data)
+    lr = LogisticRegression(max_iter=5000, random_state=42)
+    lr.fit(X_scaled, y_enc)
+    y_pred = lr.predict(X_scaled)
 
+    # Random Forest (no scaling needed)
     rf = RandomForestClassifier(n_estimators=100, random_state=42)
     rf.fit(X, y_enc)
 

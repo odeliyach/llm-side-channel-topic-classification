@@ -21,15 +21,13 @@ Why Gemini 1.5 Flash?
 import json
 import time
 import os
-import google.generativeai as genai
-
+from groq import Groq
 # ── API key ──────────────────────────────────────────────────────────────────
-# Replace with your key from https://aistudio.google.com
+# Replace with your key from console.groq.com
 # Do NOT commit this to GitHub — use an environment variable in production.
-API_KEY = "GEMINI-TOKEN"
-genai.configure(api_key=API_KEY)
-model = genai.GenerativeModel("gemini-2.5-flash")
+API_KEY = "TOKEN"
 
+client = Groq(api_key=API_KEY)
 # ── Prompts ───────────────────────────────────────────────────────────────────
 # 15 prompts per topic, deliberately varied in framing, length, and angle.
 # Why varied? If all prompts in a topic look similar, Gemini responds
@@ -128,7 +126,7 @@ PROMPTS = {
 
 def get_token_lengths(prompt: str) -> list[int]:
     """
-    Query Gemini in streaming mode and return a list of chunk lengths.
+    Query llama-4 in streaming mode and return a list of chunk lengths.
 
     Each chunk from the streaming API corresponds to a small number of tokens.
     We record len(chunk.text) — the character length — and discard the text.
@@ -141,24 +139,27 @@ def get_token_lengths(prompt: str) -> list[int]:
     """
     lengths = []
     try:
-        response = model.generate_content(prompt, stream=True)
-        for chunk in response:
-            if chunk.text:
-                # Record length only — the text itself is discarded
-                lengths.append(len(chunk.text))
+        stream = client.chat.completions.create(
+            model="meta-llama/llama-4-scout-17b-16e-instruct",  # 1000 req/day free
+            messages=[{"role": "user", "content": prompt}],
+            stream=True,
+        )
+        for chunk in stream:
+            delta = chunk.choices[0].delta.content
+            if delta:
+                lengths.append(len(delta))
     except Exception as e:
-        print(f"  [ERROR] API call failed: {e}")
+        print(f"  [ERROR] {e}")
         return []
     return lengths
 
-
-def collect_all_data(prompts: dict, output_path: str, delay: float = 1.5):
+def collect_all_data(prompts: dict, output_path: str, delay: float = 5):
     """
     Loop over all topics and prompts, collect token-length sequences,
     and save to a JSON file.
 
     delay: seconds between requests to avoid hitting the rate limit
-           (Gemini free tier: 15 requests/minute).
+           (llama free tier:  1000 req/day free).
 
     Why save raw sequences now and extract features later?
     Separating data collection from feature engineering means we can
@@ -179,6 +180,7 @@ def collect_all_data(prompts: dict, output_path: str, delay: float = 1.5):
 
             if not lengths:
                 print("  Skipping — empty response.")
+                time.sleep(delay)  # rate limiting
                 continue
 
             dataset.append({
