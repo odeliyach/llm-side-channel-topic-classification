@@ -17,19 +17,50 @@ The paper demonstrates that token-length sequences contain sufficient statistica
 
 ---
 
+## Quick Links
+
+- 🚀 **[Setup Guide](docs/SETUP.md)** — Installation & API configuration
+- 🔬 **[Methodology](docs/METHODOLOGY.md)** — Detailed experimental design
+- 📊 **[Results](docs/RESULTS.md)** — Results interpretation & insights
+- 🔐 **[Security](docs/SECURITY.md)** — API key management & ethics
+- 📝 **[Reproducibility](REPRODUCIBILITY.md)** — Exact commands & expected outputs
+- 🗂️ **[Project Status](PROJECT_STATUS.md)** — Known limitations & roadmap
+- 🎓 **[Paper Mapping](docs/PAPER_MAPPING.md)** — Alignment with Weiss et al.
+
+---
+
 ## Project Structure
 
 ```
 llm-side-channel-topic-classification/
-├── 1_generate_data.py          # Data collection: Query LLM, record token lengths
+├── 1_generate_data.py          # Data collection: Query Groq/Llama API, record token lengths
 ├── 2_train_evaluate.py         # Model training: Features, classification, evaluation
 ├── extract_size_pcap.py        # Utility: Extract packet sizes from PCAP files
 ├── data/                        # Data directory (generated at runtime)
-│   ├── 1_output.txt           # Sample output from phase 1
-│   ├── 2_output.txt           # Sample output from phase 2
-│   └── responses_gemini_catched.txt  # Raw responses (reference)
+│   ├── README.md               # Data format documentation
+│   └── .gitkeep
+├── docs/                        # Detailed documentation
+│   ├── SETUP.md                # Installation & configuration
+│   ├── METHODOLOGY.md          # Experimental design details
+│   ├── RESULTS.md              # Results interpretation
+│   ├── SECURITY.md             # API security & ethics
+│   └── PAPER_MAPPING.md        # Alignment with research paper
 ├── results/                     # Results directory (generated at runtime)
-│   └── [confusion matrices and plots]
+│   └── .gitkeep
+├── .github/                     # GitHub templates & workflows
+│   ├── ISSUE_TEMPLATE/
+│   ├── pull_request_template.md
+│   └── CODEOWNERS
+├── .env.example                 # API key template
+├── .gitignore                   # Git ignore rules
+├── .gitattributes              # Line ending consistency
+├── LICENSE                      # MIT License
+├── CHANGELOG.md                 # Version history
+├── CITATION.bib                 # Academic citation
+├── CONTRIBUTING.md              # Contribution guidelines
+├── Makefile                     # Convenience commands
+├── PROJECT_STATUS.md            # Status & roadmap
+├── REPRODUCIBILITY.md           # Reproducibility guide
 ├── requirements.txt             # Python dependencies
 └── README.md                    # This file
 ```

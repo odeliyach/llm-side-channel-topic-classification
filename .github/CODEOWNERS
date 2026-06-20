@@ -1,0 +1,20 @@
+# CODEOWNERS
+
+# Owners of the repository
+* @odeliyach @alin-prăţescu
+
+# Documentation
+/docs/ @odeliyach
+*.md @odeliyach
+
+# Scripts
+/1_generate_data.py @odeliyach
+/2_train_evaluate.py @odeliyach
+
+# Configuration
+.github/ @odeliyach
+Makefile @odeliyach
+
+# Data and Results
+/data/ @odeliyach
+/results/ @odeliyach
