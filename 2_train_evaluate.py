@@ -146,6 +146,11 @@ def train_and_evaluate(X, y, groups, topic_names: list[str], experiment_name: st
     # Full fit for Logistic Regression (using scaled data)
     lr_regularized = make_pipeline(StandardScaler(), LogisticRegression(C=0.1, max_iter=1000, random_state=42))
     lr_regularized.fit(X, y_enc)
+    predict_file(
+        lr_regularized,
+        le,
+        "./data/responses_gemini_2.json"
+    )
     y_pred = lr_regularized.predict(X)
 
     # Random Forest (no scaling needed)
@@ -199,6 +204,203 @@ def train_and_evaluate(X, y, groups, topic_names: list[str], experiment_name: st
 
     return {clf: scores.mean() for clf, scores in results.items()}
 
+# ── Test  ───────────────────────────────────────────────────
+
+import os
+import json
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+from sklearn.metrics import classification_report
+
+
+def predict_file(model, label_encoder, json_file,
+                 output_dir="./results/gemini_predictions"):
+
+    os.makedirs(output_dir, exist_ok=True)
+
+    ###########################################################
+    # Load responses
+    ###########################################################
+
+    with open(json_file, "r") as f:
+        data = json.load(f)
+
+    X = np.array([
+        extract_features(item["token_lengths"])
+        for item in data
+    ])
+
+    ###########################################################
+    # Prediction
+    ###########################################################
+
+    probs = model.predict_proba(X)
+
+    pred_idx = np.argmax(probs, axis=1)
+
+    pred_labels = label_encoder.inverse_transform(pred_idx)
+
+    confidence = probs.max(axis=1)
+
+    classes = list(label_encoder.classes_)
+
+    ###########################################################
+    # Prediction table
+    ###########################################################
+
+    df = pd.DataFrame({
+        "Response": np.arange(1, len(pred_labels)+1),
+        "Prediction": pred_labels,
+        "Confidence": confidence
+    })
+
+    df.to_csv(
+        os.path.join(output_dir, "gemini_predictions.csv"),
+        index=False
+    )
+
+    ###########################################################
+    # Probability table
+    ###########################################################
+
+    prob_df = pd.DataFrame(
+        probs,
+        columns=classes
+    )
+
+    prob_df.insert(0, "Response", np.arange(1, len(prob_df)+1))
+
+    prob_df.to_csv(
+        os.path.join(output_dir, "gemini_probabilities.csv"),
+        index=False
+    )
+
+    ###########################################################
+    # Summary txt
+    ###########################################################
+
+    with open(os.path.join(output_dir, "summary.txt"), "w") as f:
+
+        f.write("Gemini Prediction Summary\n")
+        f.write("="*50 + "\n\n")
+
+        for c in classes:
+
+            count = (df["Prediction"] == c).sum()
+
+            f.write(f"{c:20s}: {count}\n")
+
+        f.write("\n")
+
+        f.write(f"Average confidence : {confidence.mean():.3f}\n")
+        f.write(f"Minimum confidence : {confidence.min():.3f}\n")
+        f.write(f"Maximum confidence : {confidence.max():.3f}\n")
+        f.write(f"Std confidence     : {confidence.std():.3f}\n")
+
+    ###########################################################
+    # Prediction distribution
+    ###########################################################
+
+    plt.figure(figsize=(8,5))
+
+    df["Prediction"].value_counts().sort_index().plot(kind="bar")
+
+    plt.ylabel("Responses")
+
+    plt.title("Predicted Subject Distribution")
+
+    plt.tight_layout()
+
+    plt.savefig(
+        os.path.join(output_dir,
+                     "predicted_subject_distribution.png"),
+        dpi=300
+    )
+
+    plt.close()
+
+    ###########################################################
+    # Confidence histogram
+    ###########################################################
+
+    plt.figure(figsize=(8,5))
+
+    plt.hist(confidence, bins=20)
+
+    plt.xlabel("Confidence")
+
+    plt.ylabel("Responses")
+
+    plt.title("Prediction Confidence")
+
+    plt.tight_layout()
+
+    plt.savefig(
+        os.path.join(output_dir,
+                     "confidence_histogram.png"),
+        dpi=300
+    )
+
+    plt.close()
+
+    ###########################################################
+    # Heatmap
+    ###########################################################
+
+    plt.figure(figsize=(10,6))
+
+    plt.imshow(probs,
+               aspect="auto",
+               interpolation="nearest")
+
+    plt.colorbar(label="Probability")
+
+    plt.yticks(
+        np.arange(len(df)),
+        df["Response"]
+    )
+
+    plt.xticks(
+        np.arange(len(classes)),
+        classes,
+        rotation=45
+    )
+
+    plt.xlabel("Subject")
+
+    plt.ylabel("Response")
+
+    plt.title("Prediction Probabilities")
+
+    plt.tight_layout()
+
+    plt.savefig(
+        os.path.join(output_dir,
+                     "probability_heatmap.png"),
+        dpi=300
+    )
+
+    plt.close()
+
+    ###########################################################
+    # Console output
+    ###########################################################
+
+    print("\nGemini Predictions")
+    print("="*60)
+
+    print(df)
+
+    print("\nPrediction counts")
+
+    print(df["Prediction"].value_counts())
+
+    print("\nAverage confidence:",
+          confidence.mean())
+
+    return df
 
 # ── Summary comparison plot ───────────────────────────────────────────────────
 

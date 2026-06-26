@@ -1,4 +1,5 @@
 from scapy.all import rdpcap, TCP, IPv6, IP
+import json
 
 SERVER = "2001:4860:482d:200::"
 
@@ -69,13 +70,21 @@ if current:
     responses.append(current)
 
 print(len(responses))
-
+res = []
 for i, response in enumerate(responses):
 
     lengths = [pkt["len"] for pkt in response]
 
     print(f"Response {i+1}")
     print(f" -> {len(lengths)} chunks")
-    print(f" -> lengths sample: {lengths[:8]}")
+    print(f" -> lengths sample: {lengths}")
     print(f" -> total bytes: {sum(lengths)}")
     print()
+    res.append({
+        "response": i + 1,
+        "token_lengths": lengths,
+        "total_bytes": sum(lengths)
+    })
+
+with open("data/responses_gemini_2.json", "w") as f:
+    json.dump(res, f, indent=2)
