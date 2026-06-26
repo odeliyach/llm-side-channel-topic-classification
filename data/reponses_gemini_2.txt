@@ -1,0 +1,104 @@
+Response 1
+ -> 3011 chunks
+ -> lengths sample: [39, 1220, 1220, 1220, 1220, 1220, 485, 1220]
+ -> total bytes: 3441628
+
+Response 2
+ -> 30 chunks
+ -> lengths sample: [501, 1220, 1220, 1220, 1220, 1220, 1220, 1031]
+ -> total bytes: 15737
+
+Response 3
+ -> 1320 chunks
+ -> lengths sample: [39, 1220, 1220, 1220, 1220, 1220, 230, 1220]
+ -> total bytes: 1427489
+
+Response 4
+ -> 132 chunks
+ -> lengths sample: [39, 1020, 285, 180, 31, 39, 110, 1220]
+ -> total bytes: 77238
+
+Response 5
+ -> 5 chunks
+ -> lengths sample: [1220, 1220, 318, 31, 39]
+ -> total bytes: 2828
+
+Response 6
+ -> 294 chunks
+ -> lengths sample: [1164, 392, 264, 31, 39, 250, 31, 39]
+ -> total bytes: 84291
+
+Response 7
+ -> 81 chunks
+ -> lengths sample: [1003, 405, 253, 31, 39, 1003, 224, 67]
+ -> total bytes: 21769
+
+Response 8
+ -> 83 chunks
+ -> lengths sample: [998, 382, 210, 165, 31, 39, 1000, 258]
+ -> total bytes: 24775
+
+Response 9
+ -> 67 chunks
+ -> lengths sample: [999, 265, 610, 354, 252, 31, 39, 252]
+ -> total bytes: 19055
+
+Response 10
+ -> 74 chunks
+ -> lengths sample: [1005, 238, 1220, 1032, 31, 39, 413, 31]
+ -> total bytes: 22230
+
+Response 11
+ -> 73 chunks
+ -> lengths sample: [1001, 299, 1025, 348, 231, 136, 31, 39]
+ -> total bytes: 21239
+
+Response 12
+ -> 77 chunks
+ -> lengths sample: [1003, 396, 252, 31, 39, 253, 31, 276]
+ -> total bytes: 21991
+
+Response 13
+ -> 75 chunks
+ -> lengths sample: [1003, 269, 263, 31, 39, 250, 31, 39]
+ -> total bytes: 20901
+
+Response 14
+ -> 83 chunks
+ -> lengths sample: [998, 349, 253, 31, 39, 255, 31, 39]
+ -> total bytes: 23255
+
+Response 15
+ -> 172 chunks
+ -> lengths sample: [1004, 182, 303, 31, 39, 1165, 422, 361]
+ -> total bytes: 45040
+
+Response 16
+ -> 15 chunks
+ -> lengths sample: [252, 31, 39, 325, 31, 39, 251, 31]
+ -> total bytes: 1683
+
+Response 17
+ -> 63 chunks
+ -> lengths sample: [1110, 315, 1002, 312, 199, 261, 31, 39]
+ -> total bytes: 18869
+
+Response 18
+ -> 162 chunks
+ -> lengths sample: [1001, 347, 150, 31, 39, 999, 406, 35]
+ -> total bytes: 48988
+
+Response 19
+ -> 90 chunks
+ -> lengths sample: [1008, 303, 257, 31, 39, 316, 31, 39]
+ -> total bytes: 27620
+
+Response 20
+ -> 79 chunks
+ -> lengths sample: [253, 31, 39, 251, 31, 39, 252, 31]
+ -> total bytes: 22636
+
+Response 21
+ -> 5 chunks
+ -> lengths sample: [1004, 296, 80, 31, 39]
+ -> total bytes: 1450
