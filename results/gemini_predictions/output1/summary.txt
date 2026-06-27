@@ -1,0 +1,13 @@
+Gemini Prediction Summary
+==================================================
+
+cooking             : 0
+legal               : 0
+medical_advice      : 21
+poetry              : 0
+python_code         : 0
+
+Average confidence : 0.971
+Minimum confidence : 0.671
+Maximum confidence : 1.000
+Std confidence     : 0.091
