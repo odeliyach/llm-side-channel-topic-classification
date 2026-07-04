@@ -1,14 +1,12 @@
 from scapy.all import rdpcap, TCP, IPv6, IP
 import json
 
-SERVER = "2001:4860:482d:200::"
+SERVER_PREFIX = "2001:4860:4826:200:"
 
-packets = rdpcap("../tcp-stream.pcap")
-
+packets = rdpcap("../tcp-filtered-100.pcap")
 events = []
 
 for pkt in packets:
-
     if TCP not in pkt:
         continue
 
@@ -23,15 +21,14 @@ for pkt in packets:
     else:
         continue
 
-    if SERVER not in (src, dst):
+    if not (src.startswith(SERVER_PREFIX) or dst.startswith(SERVER_PREFIX)):
         continue
 
     payload = len(bytes(tcp.payload))
-
     if payload == 0:
         continue
 
-    direction = "S2C" if src == SERVER else "C2S"
+    direction = "S2C" if src.startswith(SERVER_PREFIX) else "C2S"
 
     events.append({
         "time": float(pkt.time),
@@ -41,50 +38,59 @@ for pkt in packets:
 
 events.sort(key=lambda x: x["time"])
 
-SERVER = "2001:4860:482d:200::"
-IDLE = 3.0      # seconds
-
+# --- THE CORRECTION LOGIC ---
+# Instead of tracking C2S which gets compressed down to ~30 bytes,
+# we look at the transmission silence window immediately prior to a burst.
 responses = []
-current = []
+current_response = []
+last_packet_time = None
 
-last_time = None
+# Filter to Server-to-Client bursts, dropping the 31/39 byte control signatures
+s2c_clean_events = [e for e in events if e["dir"] == "S2C"]
 
-for e in events:
-
-    if e["dir"] != "S2C":
+for e in s2c_clean_events:
+    if last_packet_time is None:
+        current_response.append(e["len"])
+        last_packet_time = e["time"]
         continue
 
-    if last_time is None:
-        current.append(e)
-        last_time = e["time"]
-        continue
+    # Calculate the exact millisecond delta between stream allocations
+    time_delta = e["time"] - last_packet_time
 
-    if e["time"] - last_time > IDLE:
-        responses.append(current)
-        current = []
+    # When your script steps to the next loop iteration, there is a clear local delay
+    # as the model waits for input and generates the initial response block token.
+    if time_delta > 0.45:  # 450ms is the standard network roundtrip/generation floor
+        if current_response:
+            responses.append(current_response)
+        current_response = []
 
-    current.append(e)
-    last_time = e["time"]
+    current_response.append(e["len"])
+    last_packet_time = e["time"]
 
-if current:
-    responses.append(current)
+if current_response:
+    responses.append(current_response)
 
-print(len(responses))
+print(f"Total isolated responses found: {len(responses)}\n")
+
 res = []
-for i, response in enumerate(responses):
+Topics = ['poetry', 'python_code', 'medical_advice', 'cooking', 'legal']
 
-    lengths = [pkt["len"] for pkt in response]
+for i, response_lengths in enumerate(responses):
+    # Dynamically match your 20-per-class balance structure
+    topic_index = i // 20
+    assigned_topic = Topics[topic_index] if topic_index < len(Topics) else "unknown"
 
-    print(f"Response {i+1}")
-    print(f" -> {len(lengths)} chunks")
-    print(f" -> lengths sample: {lengths}")
-    print(f" -> total bytes: {sum(lengths)}")
-    print()
+    print(f"Response {i + 1} -> Topic: {assigned_topic}")
+    print(f" -> {len(response_lengths)} chunks")
+    print(f" -> Chunk sizes sample (first 10): {response_lengths[:10]}")
+    print(f" -> Total bytes: {sum(response_lengths)}\n")
+
     res.append({
-        "response": i + 1,
-        "token_lengths": lengths,
-        "total_bytes": sum(lengths)
+        "topic": assigned_topic,
+        "prompt_index": i + 1,
+        "token_lengths": response_lengths,
+        "total_bytes": sum(response_lengths)
     })
 
-with open("data/responses_gemini_2.json", "w") as f:
+with open("data/responses_gemini_3.json", "w") as f:
     json.dump(res, f, indent=2)
