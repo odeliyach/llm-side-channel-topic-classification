@@ -19,6 +19,7 @@ scripts/
   2_train_evaluate_original.py  Earlier, unregularized version — kept only to reproduce the overfitting comparison at scale (see below)
   3_pairwise_heatmap.py         Extends 2_train_evaluate.py: CV accuracy for every topic pair, plotted as a 5x5 heatmap
   5_build_prompts_no_api.py     Generates 85 new prompts/topic (100 total/topic) with zero API calls, for the 500-response run
+  4_generate_and_check_prompts.py (check mode)  Computes within-topic TF-IDF cosine similarity across the 100-prompt pool, flags near-duplicate pairs -> data/prompt_diversity_report.txt
   6_collect_responses_100.py    Collects streaming responses for the 100-prompt pool -> data/responses_100.json
   extract_size_pcap.py          Extracts packet sizes from a real PCAP capture (Bonus 1)
   normalization.py              Log-scales real Gemini packet sizes so they're comparable to API chunk lengths (Bonus 1)
@@ -28,6 +29,7 @@ data/
   generation_log.txt            Terminal output from running scripts/1_generate_data.py
   responses.json                75-response dataset (15/topic), from scripts/1_generate_data.py
   prompts_candidate_100.json    100-prompt-per-topic pool, from scripts/5_build_prompts_no_api.py
+  prompt_diversity_report.txt   TF-IDF cosine similarity check across the 100-prompt pool, from scripts/4_generate_and_check_prompts.py
   responses_100.json            500-response dataset (100/topic), from scripts/6_collect_responses_100.py
   reponses_gemini_2.txt, responses_gemini_catched.txt   Raw real-traffic captures used for Bonus 1
 
@@ -116,11 +118,33 @@ We reran the *original*, unregularized script (`scripts/2_train_evaluate_origina
 - **Tokenizer dependence:** the classifier is trained and evaluated only on Llama/Groq responses. A different LLM (e.g. GPT-4) uses a different tokenizer, so token-length distributions would differ. A real attacker would need to know or infer which LLM they're targeting.
 - **Simulated, not sniffed (for the main dataset):** we collect token lengths via the API's streaming mode rather than real packet capture. `scripts/extract_size_pcap.py` and `scripts/normalization.py` validate this against real Gemini traffic instead (Bonus 1, see `results/bonus_1/`), though the chunk-to-packet mapping isn't one-to-one in practice.
 
+## Prompt diversity check
+
+Since the 500-response run depends on 85 newly generated prompts per topic actually being distinct from each other (not just paraphrases of the same 15 seed prompts), we ran a TF-IDF cosine similarity check across all 100 prompts within each topic (`scripts/4_generate_and_check_prompts.py`, check mode; full output in `data/prompt_diversity_report.txt`).
+
+Average within-topic pairwise similarity was 0.04-0.05 across all 5 topics, well below the 0.6 threshold we used to flag potential near-duplicates. Only 2-3 pairs per topic were flagged, and all of them turned out to be genuine conceptual overlaps (e.g. "memory management" vs. "garbage collector" in Python, or two diabetes-related medical prompts) rather than the generator producing repetitive phrasing. We consider the 100-prompt pool diverse enough to support the 500-response scale-up.
+
 ## Limitations
 
-- Prompts were written by us (with LLM assistance for diversity, and mechanically via `scripts/5_build_prompts_no_api.py` for the 500-response run); topic and prompt selection could bias results
 - Only 5, deliberately distinct topics — harder, more similar topic pairs (e.g. medical vs. legal) show meaningfully lower accuracy, see the pairwise heatmap
 - Single LLM (Llama 4 Scout); doesn't necessarily generalize to other models' tokenizers
+- Topic selection itself (not prompt wording) is still ours and could bias results; a real attacker doesn't get to pick easy, well-separated topics
+
+## Bonus 1: does this generalize to real traffic from a different provider?
+
+The main experiment trains and tests only on synthetic Llama/Groq data, using the API's own chunk boundaries rather than real network packets. Bonus 1 checks whether the trained classifier still works on genuine packet captures from a completely different LLM provider (Gemini, in the browser).
+
+`scripts/extract_size_pcap.py` pulls packet sizes from a real capture, and `scripts/normalization.py` log-scales them into the same range as the API-based chunk lengths so they're nominally comparable. The classifier (trained only on Llama data) was then applied to 3 real Gemini conversations:
+
+| Capture | Predicted topic (majority) | Count | Avg. confidence |
+|---|---|---|---|
+| output1 | medical_advice | 21/21 | 0.971 |
+| output2 | medical_advice 18/21, legal 3/21 | | 0.979 |
+| output3 | legal 19/21, medical_advice 2/21 | | 0.697 |
+
+This is a domain mismatch failure, not a success, and it's worth presenting as one. Across three different real conversations, predictions collapse onto only 2 of the 5 trained classes (medical_advice and legal), never poetry, python_code, or cooking, and confidence stays high even though there's no independent ground truth confirming these predictions are correct. That pattern (narrow, overconfident predictions on out-of-distribution input) is a known failure mode: log-scaling real packet sizes into the same numeric range as API chunk lengths doesn't mean the two actually follow the same distribution, so the features the classifier learned to rely on don't transfer.
+
+The honest takeaway: the attack as implemented works on the simulated API-chunk setting, but doesn't demonstrably generalize to real captured traffic from a different provider without further work, e.g. training or calibrating directly on real packet distributions rather than assuming a log-scale normalization is sufficient. Good to flag this limitation explicitly rather than claim generalization the data doesn't support.
 
 ## References
 
