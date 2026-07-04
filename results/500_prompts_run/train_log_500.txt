@@ -1,0 +1,96 @@
+Loaded 500 responses.
+
+============================================================
+Experiment: 2 Topics
+Topics: ['poetry', 'python_code']
+Samples: 200 | Classes: 2
+Random baseline: 50%
+============================================================
+
+Logistic Regression:
+  CV accuracy: 0.905 ± 0.029
+  Per-fold:    ['0.93', '0.95', '0.88', '0.88', '0.90']
+
+Random Forest:
+  CV accuracy: 0.935 ± 0.044
+  Per-fold:    ['0.95', '0.95', '0.85', '0.97', '0.95']
+
+Classification report (Logistic Regression, full fit):
+              precision    recall  f1-score   support
+
+      poetry       0.88      0.97      0.92       100
+ python_code       0.97      0.87      0.92       100
+
+    accuracy                           0.92       200
+   macro avg       0.92      0.92      0.92       200
+weighted avg       0.92      0.92      0.92       200
+
+Saved: results/confusion_2_topics_15.png
+
+Top 10 features (Random Forest importance):
+  seq_len        : 0.3920
+  hist_bin_1     : 0.1794
+  max            : 0.1251
+  hist_bin_3     : 0.0856
+  median         : 0.0745
+  mean           : 0.0434
+  hist_bin_4     : 0.0411
+  hist_bin_2     : 0.0360
+  std            : 0.0207
+  hist_bin_5     : 0.0022
+Saved: results/importance_2_topics_15.png
+
+============================================================
+Experiment: 5 Topics
+Topics: ['poetry', 'python_code', 'medical_advice', 'cooking', 'legal']
+Samples: 500 | Classes: 5
+Random baseline: 20%
+============================================================
+
+Logistic Regression:
+  CV accuracy: 0.524 ± 0.048
+  Per-fold:    ['0.51', '0.57', '0.47', '0.48', '0.59']
+
+Random Forest:
+  CV accuracy: 0.492 ± 0.015
+  Per-fold:    ['0.48', '0.50', '0.50', '0.51', '0.47']
+
+Classification report (Logistic Regression, full fit):
+                precision    recall  f1-score   support
+
+       cooking       0.44      0.59      0.50       100
+         legal       0.51      0.56      0.53       100
+medical_advice       0.43      0.37      0.40       100
+        poetry       0.47      0.34      0.39       100
+   python_code       0.90      0.86      0.88       100
+
+      accuracy                           0.54       500
+     macro avg       0.55      0.54      0.54       500
+  weighted avg       0.55      0.54      0.54       500
+
+Saved: results/confusion_5_topics_15.png
+
+Top 10 features (Random Forest importance):
+  seq_len        : 0.2692
+  hist_bin_1     : 0.1767
+  max            : 0.1615
+  mean           : 0.0836
+  std            : 0.0787
+  median         : 0.0695
+  hist_bin_4     : 0.0583
+  hist_bin_3     : 0.0552
+  hist_bin_2     : 0.0408
+  hist_bin_5     : 0.0066
+Saved: results/importance_5_topics_15.png
+
+Saved: results/comparison_2v5_topics.png
+Saved: results/confusion_2_topics_cv.png
+Saved: results/confusion_5_topics_cv.png
+
+── Final summary ──
+Classifier                   2-topic    5-topic
+-----------------------------------------------
+Logistic Regression            0.905      0.524
+Random Forest                  0.935      0.492
+
+Random baseline:               0.500      0.200

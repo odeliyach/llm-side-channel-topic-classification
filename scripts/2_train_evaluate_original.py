@@ -26,8 +26,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 from collections import defaultdict
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import make_pipeline
+
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import StratifiedGroupKFold, cross_val_score
@@ -69,7 +68,7 @@ def extract_features(token_lengths: list[int]) -> np.ndarray:
     # Normalization makes it independent of response length.
     # INTERVIEW NOTE: Without normalization, long responses would dominate
     # just because they have more tokens — we'd be learning length, not pattern.
-    hist,_ = np.histogram(arr, bins=[1, 3, 6, 11, 16, 22], density=False)
+    hist, _ = np.histogram(arr, bins=range(1, 22), density=False)
     hist_normalized = hist / (hist.sum() + 1e-8)  # avoid div-by-zero
 
     features = np.concatenate([
@@ -130,11 +129,11 @@ def train_and_evaluate(X, y, groups, topic_names: list[str], experiment_name: st
 
     # StratifiedGroupKFold: stratified by class, grouped by prompt
     cv = StratifiedGroupKFold(n_splits=5)
-    # Pre‑fit a scaler on the whole dataset (for full fit)
+
     results = {}
     for clf_name, clf in [
-        ("Logistic Regression", make_pipeline(StandardScaler(), LogisticRegression(max_iter=1000, random_state=42))),
-        ("Random Forest", RandomForestClassifier(n_estimators=100, random_state=42)),
+        ("Logistic Regression", LogisticRegression(max_iter=1000, random_state=42)),
+        ("Random Forest",       RandomForestClassifier(n_estimators=100, random_state=42)),
     ]:
         scores = cross_val_score(clf, X, y_enc, cv=cv, groups=groups, scoring="accuracy")
         results[clf_name] = scores
@@ -143,18 +142,11 @@ def train_and_evaluate(X, y, groups, topic_names: list[str], experiment_name: st
         print(f"  Per-fold:    {[f'{s:.2f}' for s in scores]}")
 
     # Full fit on all data for confusion matrix and feature importance
-    # Full fit for Logistic Regression (using scaled data)
-    lr_regularized = make_pipeline(StandardScaler(), LogisticRegression(C=0.1, max_iter=1000, random_state=42))
-    lr_regularized.fit(X, y_enc)
-    predict_file(
-        lr_regularized,
-        le,
-        "./data/responses_gemini_2.json"
-    )
-    y_pred = lr_regularized.predict(X)
+    lr = LogisticRegression(max_iter=1000, random_state=42)
+    lr.fit(X, y_enc)
+    y_pred = lr.predict(X)
 
-    # Random Forest (no scaling needed)
-    rf = RandomForestClassifier(n_estimators=100, max_depth=3, min_samples_leaf=3, random_state=42)
+    rf = RandomForestClassifier(n_estimators=100, random_state=42)
     rf.fit(X, y_enc)
 
     print(f"\nClassification report (Logistic Regression, full fit):")
@@ -168,7 +160,7 @@ def train_and_evaluate(X, y, groups, topic_names: list[str], experiment_name: st
     disp.plot(ax=ax, colorbar=False)
     ax.set_title(f"Confusion Matrix — {experiment_name}\n(Logistic Regression, full fit)")
     plt.tight_layout()
-    fname = f"results/confusion_{experiment_name.lower().replace(' ', '_')}.png"
+    fname = f"results/confusion_{experiment_name.lower().replace(' ', '_')}_run1_500.png"
     plt.savefig(fname, dpi=150)
     plt.close()
     print(f"Saved: {fname}")
@@ -197,210 +189,13 @@ def train_and_evaluate(X, y, groups, topic_names: list[str], experiment_name: st
     ax.set_title(f"Feature Importance — {experiment_name}")
     ax.set_ylabel("Importance")
     plt.tight_layout()
-    fname = f"results/importance_{experiment_name.lower().replace(' ', '_')}.png"
+    fname = f"results/importance_{experiment_name.lower().replace(' ', '_')}_run1_500.png"
     plt.savefig(fname, dpi=150)
     plt.close()
     print(f"Saved: {fname}")
 
     return {clf: scores.mean() for clf, scores in results.items()}
 
-# ── Test  ───────────────────────────────────────────────────
-
-import os
-import json
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-
-from sklearn.metrics import classification_report
-
-
-def predict_file(model, label_encoder, json_file,
-                 output_dir="./results/gemini_predictions"):
-
-    os.makedirs(output_dir, exist_ok=True)
-
-    ###########################################################
-    # Load responses
-    ###########################################################
-
-    with open(json_file, "r") as f:
-        data = json.load(f)
-
-    X = np.array([
-        extract_features(item["token_lengths"])
-        for item in data
-    ])
-
-    ###########################################################
-    # Prediction
-    ###########################################################
-
-    probs = model.predict_proba(X)
-
-    pred_idx = np.argmax(probs, axis=1)
-
-    pred_labels = label_encoder.inverse_transform(pred_idx)
-
-    confidence = probs.max(axis=1)
-
-    classes = list(label_encoder.classes_)
-
-    ###########################################################
-    # Prediction table
-    ###########################################################
-
-    df = pd.DataFrame({
-        "Response": np.arange(1, len(pred_labels)+1),
-        "Prediction": pred_labels,
-        "Confidence": confidence
-    })
-
-    df.to_csv(
-        os.path.join(output_dir, "gemini_predictions.csv"),
-        index=False
-    )
-
-    ###########################################################
-    # Probability table
-    ###########################################################
-
-    prob_df = pd.DataFrame(
-        probs,
-        columns=classes
-    )
-
-    prob_df.insert(0, "Response", np.arange(1, len(prob_df)+1))
-
-    prob_df.to_csv(
-        os.path.join(output_dir, "gemini_probabilities.csv"),
-        index=False
-    )
-
-    ###########################################################
-    # Summary txt
-    ###########################################################
-
-    with open(os.path.join(output_dir, "summary.txt"), "w") as f:
-
-        f.write("Gemini Prediction Summary\n")
-        f.write("="*50 + "\n\n")
-
-        for c in classes:
-
-            count = (df["Prediction"] == c).sum()
-
-            f.write(f"{c:20s}: {count}\n")
-
-        f.write("\n")
-
-        f.write(f"Average confidence : {confidence.mean():.3f}\n")
-        f.write(f"Minimum confidence : {confidence.min():.3f}\n")
-        f.write(f"Maximum confidence : {confidence.max():.3f}\n")
-        f.write(f"Std confidence     : {confidence.std():.3f}\n")
-
-    ###########################################################
-    # Prediction distribution
-    ###########################################################
-
-    plt.figure(figsize=(8,5))
-
-    df["Prediction"].value_counts().sort_index().plot(kind="bar")
-
-    plt.ylabel("Responses")
-
-    plt.title("Predicted Subject Distribution")
-
-    plt.tight_layout()
-
-    plt.savefig(
-        os.path.join(output_dir,
-                     "predicted_subject_distribution.png"),
-        dpi=300
-    )
-
-    plt.close()
-
-    ###########################################################
-    # Confidence histogram
-    ###########################################################
-
-    plt.figure(figsize=(8,5))
-
-    plt.hist(confidence, bins=20)
-
-    plt.xlabel("Confidence")
-
-    plt.ylabel("Responses")
-
-    plt.title("Prediction Confidence")
-
-    plt.tight_layout()
-
-    plt.savefig(
-        os.path.join(output_dir,
-                     "confidence_histogram.png"),
-        dpi=300
-    )
-
-    plt.close()
-
-    ###########################################################
-    # Heatmap
-    ###########################################################
-
-    plt.figure(figsize=(10,6))
-
-    plt.imshow(probs,
-               aspect="auto",
-               interpolation="nearest")
-
-    plt.colorbar(label="Probability")
-
-    plt.yticks(
-        np.arange(len(df)),
-        df["Response"]
-    )
-
-    plt.xticks(
-        np.arange(len(classes)),
-        classes,
-        rotation=45
-    )
-
-    plt.xlabel("Subject")
-
-    plt.ylabel("Response")
-
-    plt.title("Prediction Probabilities")
-
-    plt.tight_layout()
-
-    plt.savefig(
-        os.path.join(output_dir,
-                     "probability_heatmap.png"),
-        dpi=300
-    )
-
-    plt.close()
-
-    ###########################################################
-    # Console output
-    ###########################################################
-
-    print("\nGemini Predictions")
-    print("="*60)
-
-    print(df)
-
-    print("\nPrediction counts")
-
-    print(df["Prediction"].value_counts())
-
-    print("\nAverage confidence:",
-          confidence.mean())
-
-    return df
 
 # ── Summary comparison plot ───────────────────────────────────────────────────
 
@@ -446,7 +241,7 @@ def plot_comparison(results_2topic: dict, results_5topic: dict):
 
 if __name__ == "__main__":
     # Load collected data
-    with open("data/responses.json") as f:
+    with open("data/responses_100.json") as f:
         data = json.load(f)
     print(f"Loaded {len(data)} responses.")
 

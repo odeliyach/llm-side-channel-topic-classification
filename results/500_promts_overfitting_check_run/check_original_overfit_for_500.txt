@@ -1,0 +1,148 @@
+Loaded 500 responses.
+
+============================================================
+Experiment: 2 Topics
+Topics: ['poetry', 'python_code']
+Samples: 200 | Classes: 2
+Random baseline: 50%
+============================================================
+
+Logistic Regression:
+  CV accuracy: 0.925 ± 0.027
+  Per-fold:    ['0.93', '0.93', '0.88', '0.95', '0.95']
+
+Random Forest:
+  CV accuracy: 0.935 ± 0.046
+  Per-fold:    ['0.97', '0.95', '0.85', '0.97', '0.93']
+
+Classification report (Logistic Regression, full fit):
+              precision    recall  f1-score   support
+
+      poetry       0.91      0.97      0.94       100
+ python_code       0.97      0.90      0.93       100
+
+    accuracy                           0.94       200
+   macro avg       0.94      0.94      0.93       200
+weighted avg       0.94      0.94      0.93       200
+
+Saved: results/confusion_2_topics_run1_500.png
+
+Top 10 features (Random Forest importance):
+  seq_len        : 0.3347
+  hist_bin_2     : 0.1665
+  max            : 0.0734
+  hist_bin_8     : 0.0666
+  hist_bin_6     : 0.0519
+  mean           : 0.0450
+  hist_bin_4     : 0.0362
+  median         : 0.0315
+  hist_bin_12    : 0.0257
+  hist_bin_13    : 0.0252
+Saved: results/importance_2_topics_run1_500.png
+
+============================================================
+Experiment: 5 Topics
+Topics: ['poetry', 'python_code', 'medical_advice', 'cooking', 'legal']
+Samples: 500 | Classes: 5
+Random baseline: 20%
+============================================================
+C:\Users\odali\llm-side-channel-topic-classification\venv\Lib\site-packages\sklearn\linear_model\_logistic.py:599: ConvergenceWarning: lbfgs failed to converge after 1000 iteration(s) (status=1):
+STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT
+
+Increase the number of iterations to improve the convergence (max_iter=1000).
+You might also want to scale the data as shown in:
+    https://scikit-learn.org/stable/modules/preprocessing.html
+Please also refer to the documentation for alternative solver options:
+    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+  n_iter_i = _check_optimize_result(
+C:\Users\odali\llm-side-channel-topic-classification\venv\Lib\site-packages\sklearn\linear_model\_logistic.py:599: ConvergenceWarning: lbfgs failed to converge after 1000 iteration(s) (status=1):
+STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT
+
+Increase the number of iterations to improve the convergence (max_iter=1000).
+You might also want to scale the data as shown in:
+    https://scikit-learn.org/stable/modules/preprocessing.html
+Please also refer to the documentation for alternative solver options:
+    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+  n_iter_i = _check_optimize_result(
+C:\Users\odali\llm-side-channel-topic-classification\venv\Lib\site-packages\sklearn\linear_model\_logistic.py:599: ConvergenceWarning: lbfgs failed to converge after 1000 iteration(s) (status=1):
+STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT
+
+Increase the number of iterations to improve the convergence (max_iter=1000).
+You might also want to scale the data as shown in:
+    https://scikit-learn.org/stable/modules/preprocessing.html
+Please also refer to the documentation for alternative solver options:
+    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+  n_iter_i = _check_optimize_result(
+C:\Users\odali\llm-side-channel-topic-classification\venv\Lib\site-packages\sklearn\linear_model\_logistic.py:599: ConvergenceWarning: lbfgs failed to converge after 1000 iteration(s) (status=1):
+STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT
+
+Increase the number of iterations to improve the convergence (max_iter=1000).
+You might also want to scale the data as shown in:
+    https://scikit-learn.org/stable/modules/preprocessing.html
+Please also refer to the documentation for alternative solver options:
+    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+  n_iter_i = _check_optimize_result(
+C:\Users\odali\llm-side-channel-topic-classification\venv\Lib\site-packages\sklearn\linear_model\_logistic.py:599: ConvergenceWarning: lbfgs failed to converge after 1000 iteration(s) (status=1):
+STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT
+
+Increase the number of iterations to improve the convergence (max_iter=1000).
+You might also want to scale the data as shown in:
+    https://scikit-learn.org/stable/modules/preprocessing.html
+Please also refer to the documentation for alternative solver options:
+    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+  n_iter_i = _check_optimize_result(
+
+Logistic Regression:
+  CV accuracy: 0.516 ± 0.048
+  Per-fold:    ['0.56', '0.54', '0.43', '0.55', '0.50']
+
+Random Forest:
+  CV accuracy: 0.594 ± 0.023
+  Per-fold:    ['0.63', '0.60', '0.60', '0.56', '0.58']
+C:\Users\odali\llm-side-channel-topic-classification\venv\Lib\site-packages\sklearn\linear_model\_logistic.py:599: ConvergenceWarning: lbfgs failed to converge after 1000 iteration(s) (status=1):
+STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT
+
+Increase the number of iterations to improve the convergence (max_iter=1000).
+You might also want to scale the data as shown in:
+    https://scikit-learn.org/stable/modules/preprocessing.html
+Please also refer to the documentation for alternative solver options:
+    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+  n_iter_i = _check_optimize_result(
+
+Classification report (Logistic Regression, full fit):
+                precision    recall  f1-score   support
+
+       cooking       0.50      0.56      0.53       100
+         legal       0.49      0.52      0.50       100
+medical_advice       0.45      0.36      0.40       100
+        poetry       0.42      0.42      0.42       100
+   python_code       0.88      0.89      0.89       100
+
+      accuracy                           0.55       500
+     macro avg       0.55      0.55      0.55       500
+  weighted avg       0.55      0.55      0.55       500
+
+Saved: results/confusion_5_topics_run1_500.png
+
+Top 10 features (Random Forest importance):
+  seq_len        : 0.1194
+  hist_bin_2     : 0.0939
+  hist_bin_1     : 0.0725
+  mean           : 0.0620
+  hist_bin_8     : 0.0619
+  std            : 0.0565
+  hist_bin_9     : 0.0533
+  hist_bin_5     : 0.0493
+  hist_bin_10    : 0.0480
+  hist_bin_4     : 0.0440
+Saved: results/importance_5_topics_run1_500.png
+
+Saved: results/comparison_2v5_topics.png
+
+── Final summary ──
+Classifier                   2-topic    5-topic
+-----------------------------------------------
+Logistic Regression            0.925      0.516
+Random Forest                  0.935      0.594
+
+Random baseline:               0.500      0.200
