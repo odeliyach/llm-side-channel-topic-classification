@@ -170,7 +170,7 @@ def train_and_evaluate(X, y, groups, topic_names: list[str], experiment_name: st
     disp.plot(ax=ax, colorbar=False)
     ax.set_title(f"Confusion Matrix — {experiment_name}\n(Logistic Regression, full fit)")
     plt.tight_layout()
-    fname = f"results/confusion_{experiment_name.lower().replace(' ', '_')}_15.png"
+    fname = f"../results/confusion_{experiment_name.lower().replace(' ', '_')}_15.png"
     plt.savefig(fname, dpi=150)
     plt.close()
     print(f"Saved: {fname}")
@@ -199,7 +199,7 @@ def train_and_evaluate(X, y, groups, topic_names: list[str], experiment_name: st
     ax.set_title(f"Feature Importance — {experiment_name}")
     ax.set_ylabel("Importance")
     plt.tight_layout()
-    fname = f"results/importance_{experiment_name.lower().replace(' ', '_')}_15.png"
+    fname = f"../results/importance_{experiment_name.lower().replace(' ', '_')}_15.png"
     plt.savefig(fname, dpi=150)
     plt.close()
     print(f"Saved: {fname}")
@@ -218,7 +218,7 @@ from sklearn.metrics import classification_report
 
 
 def predict_file(model, label_encoder, json_file,
-                 output_dir="./results"):
+                 output_dir="../results"):
 
     os.makedirs(output_dir, exist_ok=True)
 
@@ -439,16 +439,16 @@ def plot_comparison(results_2topic: dict, results_5topic: dict):
                 f"{bar.get_height():.2f}", ha="center", va="bottom", fontsize=9)
 
     plt.tight_layout()
-    plt.savefig("results/comparison_2v5_topics.png", dpi=150)
+    plt.savefig("../results/comparison_2v5_topics.png", dpi=150)
     plt.close()
-    print("\nSaved: results/comparison_2v5_topics.png")
+    print("\nSaved: ../results/comparison_2v5_topics.png")
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
 def generate_cv_confusion_matrices(data, topics_2, topics_5):
     """
     Generate honest CV confusion matrices using cross_val_predict.
-    Saves to results/ without overwriting existing full-fit matrices.
+    Saves to ../results/ without overwriting existing full-fit matrices.
     """
     from sklearn.model_selection import cross_val_predict
     from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
@@ -477,7 +477,7 @@ def generate_cv_confusion_matrices(data, topics_2, topics_5):
         ax.set_title(f"CV Confusion Matrix — {name.replace('_', ' ')}\n(LR, Grouped 5-fold CV)")
         plt.tight_layout()
 
-        fname = f"results/confusion_{name}.png"
+        fname = f"../results/confusion_{name}.png"
         plt.savefig(fname, dpi=150)
         plt.close()
         print(f"Saved: {fname}")
