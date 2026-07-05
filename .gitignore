@@ -51,24 +51,6 @@ env/
 *.ipynb
 
 # Data and results (generated at runtime, not tracked)
-data/*.json
-data/responses.json
-data/responses_gemini_catched.txt
-results/*.png
-results/*.csv
-results/*.txt
+results_backup/
+results_backup_500/
 
-# Generated files
-*.log
-*.pot
-
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
-.tox/
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
