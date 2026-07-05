@@ -40,6 +40,7 @@ results/
   500_promts_c=1_run/                 Same 500 responses, weaker regularization (C=1) — isolates whether regularization strength still matters at this scale
   500_promts_overfitting_check_run/   Same 500 responses run through the ORIGINAL unregularized script — checks whether the overfitting seen at 75 samples shrinks with more data
   bonus_1/                            Real packet capture of a Gemini conversation (Bonus 1), outputs 1-3
+    direct_training_on_real_traffic/  Model trained directly on real Gemini data instead of the mismatched Llama-trained model
 ```
 
 ## Setup
@@ -143,6 +144,9 @@ The main experiment trains and tests only on synthetic Llama/Groq data, using th
 | output3 | legal 19/21, medical_advice 2/21 | | 0.697 |
 
 This is a domain mismatch failure, not a success, and it's worth presenting as one. Across three different real conversations, predictions collapse onto only 2 of the 5 trained classes (medical_advice and legal), never poetry, python_code, or cooking, and confidence stays high even though there's no independent ground truth confirming these predictions are correct. That pattern (narrow, overconfident predictions on out-of-distribution input) is a known failure mode: log-scaling real packet sizes into the same numeric range as API chunk lengths doesn't mean the two actually follow the same distribution, so the features the classifier learned to rely on don't transfer.
+
+Follow-up: training directly on real data. To address the domain mismatch above, we also tried training and evaluating the classifier directly on real captured Gemini traffic (data/responses_gemini_verified.json, 80 labeled responses across 4 topics, medical_advice excluded since it was the topic most confused with legal in earlier testing). Results: 2-topic CV accuracy 52.5% (vs. 50% random baseline), 4-topic CV accuracy 25% (vs. 25% random baseline, at chance). With only 20 samples per topic, the model doesn't beat chance once medical_advice is removed and the domain gap is closed. This suggests the signal seen in the synthetic experiment doesn't survive at real network-packet granularity with this little data. See results/bonus_1/direct_training_on_real_traffic/.
+
 
 The honest takeaway: the attack as implemented works on the simulated API-chunk setting, but doesn't demonstrably generalize to real captured traffic from a different provider without further work, e.g. training or calibrating directly on real packet distributions rather than assuming a log-scale normalization is sufficient. Good to flag this limitation explicitly rather than claim generalization the data doesn't support.
 
