@@ -2,8 +2,6 @@
 
 Reproducing the topic classification attack from **"What Was Your Prompt? A Remote Keylogging Attack on AI Assistants"** (Weiss et al., USENIX Security 2024).
 
-Week 9 experiment — ML Security Seminar.
-
 ## What this does
 
 LLM responses are streamed token by token. Even over encrypted HTTPS, the size of each streamed chunk leaks the length of the token inside it. An eavesdropper who can't read the content can still see a sequence like `[3, 5, 12, 2, 8, ...]`.
@@ -131,7 +129,7 @@ Average within-topic pairwise similarity was 0.04-0.05 across all 5 topics, well
 - Single LLM (Llama 4 Scout); doesn't necessarily generalize to other models' tokenizers
 - Topic selection itself (not prompt wording) is still ours and could bias results; a real attacker doesn't get to pick easy, well-separated topics
 
-## Bonus 1: does this generalize to real traffic from a different provider?
+## Does this generalize to real traffic from a different provider?
 
 The main experiment trains and tests only on synthetic Llama/Groq data, using the API's own chunk boundaries rather than real network packets. Bonus 1 checks whether the trained classifier still works on genuine packet captures from a completely different LLM provider (Gemini, in the browser).
 
@@ -143,12 +141,12 @@ The main experiment trains and tests only on synthetic Llama/Groq data, using th
 | output2 | medical_advice 18/21, legal 3/21 | | 0.979 |
 | output3 | legal 19/21, medical_advice 2/21 | | 0.697 |
 
-This is a domain mismatch failure, not a success, and it's worth presenting as one. Across three different real conversations, predictions collapse onto only 2 of the 5 trained classes (medical_advice and legal), never poetry, python_code, or cooking, and confidence stays high even though there's no independent ground truth confirming these predictions are correct. That pattern (narrow, overconfident predictions on out-of-distribution input) is a known failure mode: log-scaling real packet sizes into the same numeric range as API chunk lengths doesn't mean the two actually follow the same distribution, so the features the classifier learned to rely on don't transfer.
+This is a domain mismatch failure. Across three different real conversations, predictions collapse onto only 2 of the 5 trained classes (medical_advice and legal), never poetry, python_code, or cooking, and confidence stays high even though there's no independent ground truth confirming these predictions are correct. That pattern (narrow, overconfident predictions on out-of-distribution input) is a known failure mode: log-scaling real packet sizes into the same numeric range as API chunk lengths doesn't mean the two actually follow the same distribution, so the features the classifier learned to rely on don't transfer.
 
-Follow-up: training directly on real data. To address the domain mismatch above, we also tried training and evaluating the classifier directly on real captured Gemini traffic (data/responses_gemini_verified.json, 80 labeled responses across 4 topics, medical_advice excluded since it was the topic most confused with legal in earlier testing). Results: 2-topic CV accuracy 52.5% (vs. 50% random baseline), 4-topic CV accuracy 25% (vs. 25% random baseline, at chance). With only 20 samples per topic, the model doesn't beat chance once medical_advice is removed and the domain gap is closed. This suggests the signal seen in the synthetic experiment doesn't survive at real network-packet granularity with this little data. See results/bonus_1/direct_training_on_real_traffic/.
+Follow-up: training directly on real data. To address the domain mismatch above, we also tried training and evaluating the classifier directly on real captured Gemini traffic (data/responses_gemini_verified.json, 80 labeled responses across 4 topics, medical_advice excluded since it was the topic most confused with legal in earlier testing). 
+Results: 2-topic CV accuracy 52.5% (vs. 50% random baseline), 4-topic CV accuracy 25% (vs. 25% random baseline, at chance). With only 20 samples per topic, the model doesn't beat chance once medical_advice is removed and the domain gap is closed. This suggests the signal seen in the synthetic experiment doesn't survive at real network-packet granularity with this little data. See results/bonus_1/direct_training_on_real_traffic/.
 
-
-The honest takeaway: the attack as implemented works on the simulated API-chunk setting, but doesn't demonstrably generalize to real captured traffic from a different provider without further work, e.g. training or calibrating directly on real packet distributions rather than assuming a log-scale normalization is sufficient. Good to flag this limitation explicitly rather than claim generalization the data doesn't support.
+The takeaway: the attack as implemented works on the simulated API-chunk setting, but doesn't demonstrably generalize to real captured traffic from a different provider without further work, e.g. training or calibrating directly on real packet distributions rather than assuming a log-scale normalization is sufficient. Good to flag this limitation explicitly rather than claim generalization the data doesn't support.
 
 ## References
 
